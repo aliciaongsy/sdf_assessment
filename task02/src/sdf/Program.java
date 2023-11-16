@@ -134,6 +134,7 @@ public class Program {
                 bw.write("remaining: " + String.valueOf(budget) + "\n");
                 bw.write("client_end\n");
                 
+                
 
             }
             bw.flush();
