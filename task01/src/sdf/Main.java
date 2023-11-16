@@ -5,10 +5,12 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class Main{
 
@@ -22,7 +24,7 @@ public class Main{
             System.out.println("Error, missing filename. Please input filename.");
         }
 
-        System.out.printf("System is processing file: %s",args[0]);
+        System.out.printf("Processing file: %s\n",args[0]);
 
         try (FileReader fr = new FileReader(args[0])){
             
@@ -49,30 +51,75 @@ public class Main{
                 // split by comma
                 .map(l -> l.split(","))
                 // filter out the invalid ratings
-                .filter (l -> l[RATING].matches("[0-9]+"))
+                .filter (l -> l[RATING].matches("[0-9\\.*]+"))
                 .map(l -> new Applications(l[APP_NAME], l[CATEGORY], l[RATING]))
                 .collect(Collectors.groupingBy(i -> i.getCategory()));
-            
-            // br.lines()
-            //     .skip(1)
-            //     // cleaning - remove spaces, convert to lower case
-            //     .map(l -> l.trim().toLowerCase())
-            //     .filter (l -> l.length() > 0)
-            //     .map(l -> l.split(","))
-            //     .toList();
+
+            // count processed data
+            Map<Object, Long> processedCount = data.stream()
+                // skip columns
+                .skip(1)
+                // cleaning - remove spaces, convert to lower case
+                .map(l -> l.trim().toUpperCase())
+                .filter (l -> l.length() > 0)
+                // split by comma
+                .map(l -> l.split(","))
+                // filter out the invalid ratings
+                .filter (l -> l[RATING].matches("[0-9\\.*]+")) // [0-9]+\\.?[0-9]+
+                .map(l -> new Applications(l[APP_NAME], l[CATEGORY], l[RATING]))
+                .collect(Collectors.groupingBy(i -> i.getCategory(), Collectors.counting()));
+
+            // count discarded count
+            Map<Object, Long> discardedCount = data.stream()
+                // skip columns
+                .skip(1)
+                // cleaning - remove spaces, convert to lower case
+                .map(l -> l.trim().toUpperCase())
+                .filter (l -> l.length() > 0)
+                // split by comma
+                .map(l -> l.split(","))
+                // filter out the invalid ratings
+                .filter (l -> !l[RATING].matches("[0-9\\.*]+")) // [0-9]+\\.?[0-9]+
+                .map(l -> new Applications(l[APP_NAME], l[CATEGORY], l[RATING]))
+                .collect(Collectors.groupingBy(i -> i.getCategory(), Collectors.counting()));  
             
             // print out app names in each category
             for (Map.Entry<String, List<Applications>> entry : sort.entrySet()) {
-                System.out.printf("\nCATEGORY: %s\n", entry.getKey().toUpperCase());
-                for (Applications app: entry.getValue()){
-                    System.out.printf("   %s\n", app.getName());
-                }
-
-            
-
-            // System.out.println("count:" + lines);
+                System.out.printf("\nCategory: %s\n", entry.getKey().toUpperCase());
+                // map application name to ratings
+                Map<Double, String> ratingApplications = new HashMap<>();
+                // list of ratings
+                List<Double> ratingList = new LinkedList<>();
                 
+                // loop through the applications within each list
+                for (Applications app: entry.getValue()){
+                    //System.out.printf("   %s, rating: %s\n", app.getName(), app.getRating());
+                    Double ratings = Double.parseDouble(app.getRating());
+                    ratingList.add(ratings);
+                    ratingApplications.put(ratings, app.getName());
+                }
+                // sort rating list for each category
+                Collections.sort(ratingList);
+                Double highest = ratingList.get(ratingList.size()-1);
+                Double lowest = ratingList.get(0);
+                
+                System.out.printf("Highest: %s, %.1f\n",ratingApplications.get(highest), highest);
+                System.out.printf("Lowest: %s, %.1f\n",ratingApplications.get(lowest), lowest);
+                
+                // calculate average ratings
+                Double totalRating = 0d;
+                for (int i = 0; i < ratingList.size(); i++){
+                    totalRating += ratingList.get(i);
+                }
+                Double averageRating = totalRating/ratingList.size();
+                System.out.printf("Average: %f\n",averageRating);
+
+                // count
+                System.out.printf("Count: %o\n", processedCount.get(entry.getKey().toUpperCase()));
+                System.out.printf("Discarded: %o\n",discardedCount.get(entry.getKey().toUpperCase()));
             }
+
+            System.out.printf("\nTotal lines in file: %d\n",linesRead);
         }
     }
 }
