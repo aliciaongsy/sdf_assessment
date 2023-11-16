@@ -58,6 +58,7 @@ public class Program {
             String line;
             double budget = 0;
             double spend = 0;
+            String items ="";
             String request = "";
             Item item = null;
             
@@ -86,22 +87,18 @@ public class Program {
                     case "prod_id":
                         item = new Item(array[1]);
                         itemList.add(item);
-                        System.out.println("New item created");
                         break;
 
                     case "title":
                         item.setProductTitle(array[1]);
-                        System.out.println("title set");
                         break;
 
                     case "price":
                         item.setProductPrice(Double.parseDouble(array[1]));
-                        System.out.println("price set");
                         break;
 
                     case "rating":
                         item.setProductRating(Double.parseDouble(array[1]));
-                        System.out.println("rating set");
                         break;
                 }
 
@@ -125,11 +122,15 @@ public class Program {
                     }
                 }
 
+                for (String str:selectedItems){
+                    items.concat(str+",");
+                }
+
                 bw.write("request_id: " + request + "\n");
                 bw.write("name: Ong Si Ying Alicia\n");
                 bw.write("email: aliciaongsiying@gmail.com\n");
-                bw.write("items: ");
-                bw.write("spend: " + String.valueOf(spend) + "\n");
+                bw.write("items: " + items +"\n");
+                bw.write("spent: " + String.valueOf(spend) + "\n");
                 bw.write("remaining: " + String.valueOf(budget) + "\n");
                 bw.write("client_end\n");
                 
